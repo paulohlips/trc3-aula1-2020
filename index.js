@@ -1,86 +1,58 @@
 const express = require("express");
 
-const server = express(); //Chama a função do express
+const server = express();
 
 server.use(express.json());
 
-const users = ["Ayrton", "André", "Paulo"];
+const users = ["Paulo", "Andre"];
 
-// //query params: ?nome=Paulo
-// server.get("/", (req, res) => {
-//   const { nome } = req.query;
-//   return res.send(`Olá, ${nome}`);
-// });
-
-// //route params: /user/1
-// server.get("/aluno/:id", (req, res) => {
-//   const { id } = req.params;
-//   return res.send(`Buscando o usuário ${user[id - 1]}`);
-// });
-
-//GLOBAL MIDDLEWARE
+//Middleware Global: logs de requisição
 server.use((req, res, next) => {
-  console.time("request");
-  console.log(`Método ${req.method} na rota ${req.url}`);
+  console.log(`Método: ${req.method}, URL: ${req.url}`);
 
-  next();
-
-  console.timeEnd("request");
+  return next();
 });
 
-//LOCAL MIDDLEWARES
-function CheckUserName(req, res, next) {
+//Middleware Local
+function checkName(req, res, next) {
   if (!req.body.name) {
-    return res.status(400).json({ error: "User name is required" });
+    return res.status(400).json({ message: "Você precisa enviar o name!!!" });
   }
 
-  next();
+  return next();
 }
 
-function CheckUserId(req, res, next) {
-  const { id } = req.params;
-  if (!users[id]) {
-    return res.status(400).json({ error: "Users does not exists" });
-  }
+/* 
+CRUD: CREATE-READ-UPDATE-DELETE
+*/
 
-  next();
-}
-//READ
-server.get("/user", (req, res) => {
+server.get("/users", (req, res) => {
   return res.json(users);
 });
 
-server.get("/user/:id", CheckUserId, (req, res) => {
-  const { id } = req.params;
-  return res.json(users[id - 1]);
-});
-
-//CREATE
-server.post("/user", CheckUserName, (req, res) => {
+server.post("/users", checkName, (req, res) => {
   const { name } = req.body;
 
   users.push(name);
-
   return res.json(users);
 });
 
-//UPDATE
-server.put("/user/:id", CheckUserId, CheckUserName, (req, res) => {
+/* ROUTE PARAMS */
+server.put("/users/:id", (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { newName } = req.body;
 
-  users[id] = name;
+  users[id] = newName;
 
-  return res.json(users);
+  return res.json({ users });
 });
 
-//DELETE
-server.delete("/user/:id", CheckUserId, (req, res) => {
+server.delete("/users/:id", (req, res) => {
   const { id } = req.params;
 
   users.splice(id, 1);
 
-  return res.json({ mensagem: "Usuário excluído", users });
+  return res.json(users);
 });
 
 server.listen(3000);
